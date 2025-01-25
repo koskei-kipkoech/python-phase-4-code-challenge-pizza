@@ -24,6 +24,62 @@ api = Api(app)
 def index():
     return "<h1>Code challenge</h1>"
 
+# @app.route("/restaurants", methods=["GET"])
+# def restaurants():
+#     restaurants = Restaurant.query.all()
+#     return [restaurant.to_dict(only = ('id','name', 'address')) for restaurant in restaurants],200
+
+class Restaurants(Resource):
+    def get(self):
+        restaurants = Restaurant.query.all()
+        return [restaurant.to_dict(only = ('id', 'name', 'address')) for restaurant in restaurants],200
+
+class RestaurantByID(Resource):
+    def get(self, id):
+        with db.session() as session:
+            restaurant = session.get(Restaurant, id)
+            if restaurant:
+                return restaurant.to_dict(),200
+            return {'error': 'Restaurant not found'},404
+        
+    def delete(self,id):
+        with db.session() as session:
+            restaurant = session.get(Restaurant,id)
+            if restaurant:
+                session.delete(restaurant)
+                session.commit()
+                return {}, 204
+            return {'error': 'Restaurant not found'},404
+        
+class Pizzas(Resource):
+    def get (self):
+        pizzas = Pizza.query.all()
+        return [pizza.to_dict(only = ('id', 'name', 'ingredients')) for pizza in pizzas],200
+
+class RestaurantPizzas(Resource):
+    def post(self):
+        data = request.get_json()
+        try:
+            new_restaurant_pizza = RestaurantPizza(
+                price=data["price"],
+                pizza_id=data["pizza_id"],
+                restaurant_id=data["restaurant_id"]
+            )
+            db.session.add(new_restaurant_pizza)
+            db.session.commit()
+            return make_response(new_restaurant_pizza.to_dict(),201)
+        except ValueError as e:
+            db.session.rollback()
+            return {"errors":["validation errors"]},400
+        except Exception as e:
+            db.session.rollback()
+            return {"errors":["validation errors"]},400
+
+api.add_resource(Restaurants, '/restaurants')
+api.add_resource(RestaurantByID, '/restaurants/<int:id>')
+api.add_resource(Pizzas, '/pizzas')
+api.add_resource(RestaurantPizzas, '/restaurant_pizzas')
+
 
 if __name__ == "__main__":
     app.run(port=5555, debug=True)
