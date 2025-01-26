@@ -37,9 +37,9 @@ class Restaurants(Resource):
 class RestaurantByID(Resource):
     def get(self, id):
         with db.session() as session:
-            restaurant = session.get(Restaurant, id)
-            if restaurant:
-                return restaurant.to_dict(),200
+            restaurants = session.get(Restaurant, id)
+            if restaurants:
+                return restaurants.to_dict(),200
             return {'error': 'Restaurant not found'},404
         
     def delete(self,id):
